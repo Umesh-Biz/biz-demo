@@ -30,12 +30,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  orders: 
-    path: ./orders
   ums:
     path: ./ums
-  deliveries: 
-    path: ./deliveries
 
 
   # The following adds the Cupertino Icons font to your application.

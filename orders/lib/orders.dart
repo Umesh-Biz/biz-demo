@@ -4,6 +4,7 @@ library orders;
 import 'dart:convert';
 
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:orders/screens/po_details.dart';
 import 'package:orders/widgets/order_card.dart';
 import 'package:ums/screens/navigation.dart';
 import '../models/order.dart';
@@ -43,7 +44,6 @@ class _OrdersState extends State<Orders> with TickerProviderStateMixin {
 
       final jwt = await _storage.read(key: 'jwt');
       final Map<String, dynamic> headers = {
-        'page': '0',
         'size': '10',
       };
 
@@ -52,13 +52,15 @@ class _OrdersState extends State<Orders> with TickerProviderStateMixin {
         // 'buyerId': '20002',
         headers['requestType'] = 'TO';
         headers['buyerId'] = '20002';
+        headers['page'] = '1';
       } else {
         headers['requestType'] = 'FROM';
         headers['supplierId'] = '21898';
+        headers['page'] = '0';
       }
 
       final Uri url =
-          Uri.https('poservice.qa15.indopus.in', '/purchase-orders', headers);
+          Uri.https('poservice.qa16.indopus.in', '/purchase-orders', headers);
 
       final response =
           await http.get(url, headers: {'Authorization': 'Bearer $jwt'});
@@ -74,9 +76,11 @@ class _OrdersState extends State<Orders> with TickerProviderStateMixin {
         _isLoading = false;
       });
     } catch (error) {
-      setState(() {
-        _isLoading = false;
-      });
+      if (context.mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -106,6 +110,17 @@ class _OrdersState extends State<Orders> with TickerProviderStateMixin {
     _fetchOrders();
   }
 
+  void _viewOrdersDetails(Order order) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (ctx) => PoDetails(
+          order: order,
+          storage: _storage,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     Widget content = const Center(
@@ -115,8 +130,15 @@ class _OrdersState extends State<Orders> with TickerProviderStateMixin {
     if (_ordersList.isNotEmpty) {
       content = ListView.builder(
         itemCount: _ordersList.length,
-        itemBuilder: (ctx, index) =>
-            OrderCard(orderDetails: _ordersList[index]),
+        itemBuilder: (ctx, index) => Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 6),
+          child: InkWell(
+            onTap: () {
+              _viewOrdersDetails(_ordersList[index]);
+            },
+            child: OrderCard(orderDetails: _ordersList[index]),
+          ),
+        ),
       );
     }
 
